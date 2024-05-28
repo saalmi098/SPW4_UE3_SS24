@@ -10,3 +10,10 @@ build:
     - docker
   script:
     - mvn compile
+  artifacts:
+    paths:
+      - "target/*"
+    expire_in: 2 days
+  cache:
+    paths:
+        - ".m2/repository"
