@@ -57,12 +57,17 @@ deploy_test:
     - shell
   dependencies:
     - package
-  when: manual # this job will be executed manually (e.g. button click after payment received)
+  #when: manual # this job will be executed manually (e.g. button click after payment received)
   script:
     - docker rm --force tomcat # remove the container (tomcat)
     - docker image rm --force connect-four # remove the image
     - docker build -t connect-four . # build the image
     - docker run --rm -d --name tomcat -p 8080:8080 connect-four
+  environment:
+    name: test
+    action: start
+    url: http://localhost:8080/ConnectFour
+    on_stop: deploy_test_stop
 
 deploy_test_stop:
   stage: deploy
@@ -72,3 +77,6 @@ deploy_test_stop:
   script:
     - docker rm --force tomcat # remove the container (tomcat)
     - docker image rm --force connect-four # remove the image
+  environment:
+    name: test
+    action: stop
