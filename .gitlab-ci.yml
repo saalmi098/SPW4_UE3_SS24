@@ -17,3 +17,15 @@ build:
   cache:
     paths:
         - ".m2/repository"
+
+test:
+  stage: test
+  tags:
+    - docker
+  dependencies:
+    - build
+  script:
+    - mvn test
+  cache:
+    paths:
+      - ".m2/repository"
