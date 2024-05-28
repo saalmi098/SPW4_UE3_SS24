@@ -2,6 +2,7 @@ stages:
   - build
   - test
   - package
+  - deploy
 
 image: maven:3.9.6-amazoncorretto-21
 
@@ -49,3 +50,25 @@ package:
   cache:
     paths:
       - ".m2/repository"
+
+deploy_test:
+  stage: deploy
+  tags:
+    - shell
+  dependencies:
+    - package
+  when: manual # this job will be executed manually (e.g. button click after payment received)
+  script:
+    - docker rm --force tomcat # remove the container (tomcat)
+    - docker image rm --force connect-four # remove the image
+    - docker build -t connect-four . # build the image
+    - docker run --rm -d --name tomcat -p 8080:8080 connect-four
+
+deploy_test_stop:
+  stage: deploy
+  tags:
+    - shell
+  when: manual # this job will be executed manually (e.g. button click after payment received)
+  script:
+    - docker rm --force tomcat # remove the container (tomcat)
+    - docker image rm --force connect-four # remove the image
