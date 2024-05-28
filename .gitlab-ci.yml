@@ -4,6 +4,9 @@ stages:
 
 image: maven:3.9.6-amazoncorretto-21
 
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=./.m2/repository"
+
 build:
   stage: build
   tags:
