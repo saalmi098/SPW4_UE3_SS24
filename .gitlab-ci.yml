@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - package
 
 image: maven:3.9.6-amazoncorretto-21
 
@@ -29,6 +30,22 @@ test:
     - build
   script:
     - mvn test
+  cache:
+    paths:
+      - ".m2/repository"
+
+package:
+  stage: package
+  tags:
+    - docker
+  dependencies:
+    - build
+  script:
+    - mvn package
+  artifacts:
+    paths:
+      - "target/*.war"
+    expire_in: 2 days
   cache:
     paths:
       - ".m2/repository"
