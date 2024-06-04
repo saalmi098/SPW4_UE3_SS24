@@ -274,4 +274,10 @@ class ConnectFourImplTest {
             assertEquals(Player.none, connectFour.getWinner());
         });
     }
+
+    public int calculateStuff() {
+        int i = 0;
+        i += 200;
+        return i;
+    }
 }
