@@ -1,15 +1,17 @@
 stages:
   - build
   - test
+  - analyze
   - package
   - deploy
 
-image: maven:3.9.6-amazoncorretto-21
+image: maven:3.9.7-eclipse-temurin-21
 
-variables:
+variables: # variables hier gilt fuer alle Jobs
   MAVEN_OPTS: "-Dmaven.repo.local=./.m2/repository"
+  SONAR_PROJECT: "ConnectFour"
 
-build:
+build: # build Job in der Stage build
   stage: build
   tags:
     - docker
@@ -31,9 +33,28 @@ test:
     - build
   script:
     - mvn test
+  artifacts:
+    paths:
+      - "target/surefire-reports/*"
+      - "target/site/jacoco/*"
+    expire_in: 2 days
   cache:
     paths:
       - ".m2/repository"
+
+analyze:
+  stage: analyze
+  tags:
+    - docker
+  dependencies:
+    - build
+    - test
+  script:
+    - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.sonar_project=$SONAR_PROJECT -Dsonar.token=$SONAR_TOKEN # SONAR_PROJECT wird in den Variablen oben definiert, SONAR_URL wird in GitLab definiert (CI/CD -> Variables)
+  cache:
+    paths:
+      - ".m2/repository"
+
 
 package:
   stage: package
