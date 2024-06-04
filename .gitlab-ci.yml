@@ -50,7 +50,7 @@ analyze:
     - build
     - test
   script:
-    - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.sonar_project=$SONAR_PROJECT -Dsonar.token=$SONAR_TOKEN # SONAR_PROJECT wird in den Variablen oben definiert, SONAR_URL wird in GitLab definiert (CI/CD -> Variables)
+    - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.projectKey=$SONAR_PROJECT -Dsonar.token=$SONAR_TOKEN # SONAR_PROJECT wird in den Variablen oben definiert, SONAR_URL wird in GitLab definiert (CI/CD -> Variables)
   cache:
     paths:
       - ".m2/repository"
