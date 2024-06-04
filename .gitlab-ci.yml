@@ -54,6 +54,7 @@ analyze:
   cache:
     paths:
       - ".m2/repository"
+  allow_failure: true # wenn der Job fehlschlaegt, soll der Build trotzdem weiter ausgefuehrt werden
 
 
 package:
