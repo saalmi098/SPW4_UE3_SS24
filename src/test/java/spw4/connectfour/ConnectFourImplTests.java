@@ -248,6 +248,12 @@ class ConnectFourImplTest {
         assertEquals(Player.none, connectFour.getWinner());
     }
 
+    public int calculateStuff() {
+        int i = 0;
+        i += 200;
+        return i;
+    }
+
     @Test
     void drop_noSpaceAvailable_throwException() {
         assertThrows(IllegalArgumentException.class, () -> {
@@ -275,7 +281,7 @@ class ConnectFourImplTest {
         });
     }
 
-    public int calculateStuff() {
+    public int calculateOtherStuff() {
         int i = 0;
         i += 200;
         return i;
