@@ -3,7 +3,7 @@ SPW4 - Exercise 3
 
 Name: Andreas Salminger
 
-Effort in hours: __ TODO
+Effort in hours: 4
 
 ## 1. Connect Four Web Application and CI/CD Pipeline
 
@@ -39,8 +39,7 @@ Durchgeführte Schritte:
 
 - Schritte 1-6 aus `SETUP.md` ausführen (GitHub / Setup local CI/CD environment)
 
-- Neues GitHub-Repo angelegt, weil in GitHub-Classroom keine Settings geändert werden können
-    - `https://github.com/fhooe-se-spw4/exercise3-saalmi098` (TODO War nicht notwendig da schon vorhanden)
+- Neues GitHub-Repo `SPW_UE3_SS24` angelegt, weil in GitHub-Classroom keine Settings geändert bzw. Runner definiert werden können
     - `cd exercise3-saalmi098`
     - `git remote add spw4-ue3 https://github.com/saalmi098/SPW4_UE3_SS24.git`
     - `git commit -am "Initial commit"`
@@ -65,6 +64,19 @@ Teilschritte aus Schritt 6 (lt. GitHub-Settings Page):
         - Name: `spw4_ue3_runner`
     - `./run.sh`
 - Workflow / Pipeline anpassen
-    - `nano .github/workflows/pipeline.yml`
+    - siehe `.github/workflows/pipeline.yml`
 
-TODO : in pipeline.yml weitermachen -> pipelines definieren!
+- Pipeline in GitHub-Repo pushen
+- Runner starten
+    - In Docker-Umgebung wechseln (falls noch nicht ausgeführt):
+        - `docker exec -it github-runner /bin/bash`
+        - `su -l github-runner`
+    - `./actions-runner/run.sh`
+
+#### Ergebnis
+
+<img src="images/task_1c_running.jpg" width=700/>
+
+<img src="images/task_1c_pipeline_overview.jpg" width=900/>
+
+<img src="images/task_1c_pipeline_details.jpg" width=900/>
