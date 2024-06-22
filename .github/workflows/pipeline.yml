@@ -1,84 +1,122 @@
-name: SPW4 GitHub Actions Pipeline
-on: [push]
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 env:
-  MAVEN_OPTS: "-Dmaven.repo.local=./.m2/repository"
+  maven_packages_cache:
+  MAVEN_OPTS: -Dmaven.repo.local=./.m2/repository
 
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
-#    container:
-#      image: maven:3.9.7-eclipse-temurin-21
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: setup JDK 21
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-          # cache: maven? TODO notwendig?
-      - run: mvn compile
-      # TODO add actions/upload-artifact@v4 ?
-      #- uses: actions/cache@v4 TODO Notwendig?
-      #  with:
-      #    path: ~/.m2/repository
-      #    key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-      #    restore-keys: ${{ runner.os }}-m2
+
+      - name: Chache Pachages
+        uses: actions/cache@v4
+        with:
+          path: .m2/repository
+          key: "${{github.ref_name}}-${{github.sha}}"
+          restore-keys: ${{github.ref_name}}-
+
+      - name: Build with Maven
+        run: mvn compile
+
+      - name: Archive Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{github.job}}-${{github.ref_name}}-${{github.sha}}
+          path: target/*
+          retention-days: 7
 
   test:
-    name: Test
-    runs-on: ubuntu-latest
     needs: build
-#    container:
-#      image: maven:3.9.7-eclipse-temurin-21
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: setup JDK 21
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-          # cache: maven? TODO notwendig?
-#      - uses: actions/cache@v4 TODO Notwendig?
-#        with:
-#          path: ~/.m2/repository
-#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: ${{ runner.os }}-m2
-      - run: mvn test
+
+      - name: Chache Pachages
+        uses: actions/cache@v4
+        with:
+          path: .m2/repository
+          key: ${{github.ref_name}}-${{github.sha}}
+          restore-keys: ${{github.ref_name}}-
+
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{github.ref_name}}-${{github.sha}}
+          path: target
+
+      - name: Test with Maven
+        run: mvn test
 
   package:
-    name: Package
+    needs: [build, test] # I don't want to package (and further deploy) if tests failed
     runs-on: ubuntu-latest
-    needs: [build, test]
-#    container:
-#      image: maven:3.9.7-eclipse-temurin-21
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: setup JDK 21
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-          # cache: maven? TODO notwendig?
 
-#      - uses: actions/cache@v4
-#        with:
-#          path: ~/.m2/repository
-#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: ${{ runner.os }}-m2
-
-      - run: mvn package
-      - uses: actions/upload-artifact@v4
+      - name: Chache Pachages
+        uses: actions/cache@v4
         with:
-          name: packaged-artifacts-${{github.ref_name}}-${{github.sha}}
-          path: target/*.war
-          retention-days: 1
+          path: .m2/repository
+          key: ${{github.ref_name}}-${{github.sha}}
+          restore-keys: ${{github.ref_name}}-
 
-  deploy:
-    name: Deploy
-    runs-on: self-hosted
-    needs: package
-    steps:
-      - uses: actions/download-artifact@v4
+      - name: Download Build
+        uses: actions/download-artifact@v4
         with:
-          name: packaged-artifacts-${{github.ref_name}}-${{github.sha}}
+          name: build-${{github.ref_name}}-${{github.sha}}
           path: target
-      - run: rm -rf /usr/local/tomcat/webapps/ConnectFour.war && cp -f target/ConnectFour.war /usr/local/tomcat/webapps/
+
+      - name: Package with Maven
+        run: mvn package
+
+      - name: Archive Web Application Archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{github.job}}-${{github.ref_name}}-${{github.sha}}
+          path: target/*.war
+          retention-days: 7
+
+  deploy_test:
+    needs: [package]
+    runs-on: self-hosted
+    steps:
+      - name: download package
+        uses: actions/download-artifact@v4
+        with:
+          name: package-${{github.ref_name}}-${{github.sha}}
+          path: target
+      - name: deploy to tomcat docker image
+        # The following command will copy the war file to the tomcat webapps directory
+        # the runner already runs on the tomcat image, so we dont need to deploy a tomcat container but just copy the war file
+        run: |
+          rm -rf /usr/local/tomcat/webapps/ConnectFour.war && cp -f target/ConnectFour.war /usr/local/tomcat/webapps
