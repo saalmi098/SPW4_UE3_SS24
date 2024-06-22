@@ -1,4 +1,99 @@
-#TODO
+name: SPW4 GitHub Actions Pipeline
+on: [push]
 
-# runs-on: self-hosted
-# (lt. GithUb Docs)
+env:
+  MAVEN_OPTS: "-Dmaven.repo.local=./.m2/repository"
+
+jobs:
+  build:
+    name: Build
+    runs-on: self-hosted
+    container:
+      image: maven:3.9.7-eclipse-temurin-21
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          # cache: maven? TODO notwendig?
+      - run: mvn compile
+      # TODO add actions/upload-artifact@v4 ?
+      #- uses: actions/cache@v2 TODO Notwendig?
+      #  with:
+      #    path: ~/.m2/repository
+      #    key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      #    restore-keys: ${{ runner.os }}-m2
+
+  test:
+    name: Test
+    runs-on: self-hosted
+    needs: build
+    container:
+      image: maven:3.9.7-eclipse-temurin-21
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          # cache: maven? TODO notwendig?
+#      - uses: actions/cache@v2 TODO Notwendig?
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: ${{ runner.os }}-m2
+      - run: mvn test
+
+#      - name: Archive test reports
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: test-reports
+#          path: |
+#            target/surefire-reports/*
+#            target/site/jacoco/*
+
+  package:
+    name: Package
+    runs-on: self-hosted
+    needs: build
+    container:
+      image: maven:3.9.7-eclipse-temurin-21
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          # cache: maven? TODO notwendig?
+
+#      - uses: actions/cache@v2
+#        with:
+#          path: ~/.m2/repository
+#          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: ${{ runner.os }}-m2
+
+      - run: mvn package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packaged-artifacts
+          path: target/*.war
+          retention-days: 1
+
+  deploy:
+    name: Deploy
+    runs-on: self-hosted
+    needs: package
+    steps:
+      - uses: actions/checkout@v2
+      - name: Stop and remove existing container
+        run: docker rm --force tomcat || true
+
+      - name: Remove existing image
+        run: docker image rm --force connect-four || true
+
+      - name: Build Docker image
+        run: docker build -t connect-four .
+
+      - name: Run Docker container
+        run: docker run --rm -d --name tomcat -p 8080:8080 connect-four
