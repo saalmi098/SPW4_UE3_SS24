@@ -89,3 +89,4 @@ jobs:
         with:
           name: packaged-artifacts-${{github.ref_name}}-${{github.sha}}
           path: target
+      - run: cp -f target/ConnectFour.war /usr/local/tomcat/webapps/
